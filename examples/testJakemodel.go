@@ -1,7 +1,7 @@
 package main
 
 import (
-	"../ChanFading"
+	"../smallscale"
 	"fmt"
 	"github.com/wiless/vlib"
 	// "math"
