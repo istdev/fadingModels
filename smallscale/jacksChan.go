@@ -1,4 +1,4 @@
-package ChanFading
+package smallscale
 
 import (
 	// "fmt"
