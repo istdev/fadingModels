@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/istdev/fadingModels/PDPF"
+	"github.com/istdev/fadingModels/PDP"
 	"github.com/istdev/fadingModels/smallscalechan"
 
 	//"../smallscale"

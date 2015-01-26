@@ -13,24 +13,47 @@ type JakesModel struct {
 	ts           float64
 	beta, phi, f vlib.VectorF
 	M, N         float64
+	scale        float64
+	location     int
+	NN           int
 }
 
 type MultiTapFading []JakesModel
 
-func NewMultiTapFading(N int, fs, fd float64) MultiTapFading {
+func NewMultiTapFading(pdp vlib.VectorF, fs, fd float64) MultiTapFading {
+	N := 0
+	var tmpvec vlib.VectorI
+	var tmpscale vlib.VectorF
+	for i, v := range pdp {
+		if v != 0 {
+			N++
+			tmpvec.AppendAtEnd(i)
+			tmpscale.AppendAtEnd(math.Sqrt(v))
+		}
+	}
+
 	m := make([]JakesModel, N)
 
 	for i := 0; i < N; i++ {
 		m[i].Init(fs, fd)
+		m[i].scale = tmpscale[i]
+		m[i].location = tmpvec[i]
+		m[i].NN = len(pdp)
 	}
 	return m
 }
 
-func (m *MultiTapFading) Generate(indx float64) vlib.VectorC {
-	result := vlib.NewVectorC(len(*m))
+func (m *MultiTapFading) Generate(timestamp float64) vlib.VectorC {
+	var result vlib.VectorC
+	if len(*m) >= 1 {
+		result.Resize((*m)[0].NN)
+	}
 
 	for i := 0; i < len(*m); i++ {
-		result[i] = (*m)[i].Generate(indx)
+		pos := (*m)[i].location
+		gain := (*m)[i].scale
+		result[pos] = (*m)[i].Generate(timestamp) * complex(gain, 0)
+
 	}
 
 	return result
@@ -89,3 +112,11 @@ func (j *JakesModel) Generate(m float64) complex128 {
 	z := (z1 + z2) * complex(2.5/math.Sqrt(j.N), 0)
 	return z
 }
+
+// f is center freq in hz, v is user speed in km/h, fd is doppler shift in hz
+// func GetDoppler(f, v float64) (fd float64) {
+// 	c := 3.0e8
+// 	v = v * 1000 / 3600
+// 	fd = f * v / c
+// 	return fd
+// }
