@@ -1,35 +1,46 @@
 package main
 
 import (
+	"github.com/istdev/fadingModels/PDPF"
+	"github.com/istdev/fadingModels/smallscalechan"
+
+	//"../smallscale"
 	"fmt"
 	"github.com/wiless/gocomm"
 	"github.com/wiless/vlib"
-
-	"../smallscale"
 )
 
 ////// test multipath with slow fading
 
 func main() {
 
-	var channel smallscale.MPChannel
+	var channel smallscalechan.MPChannel
 	channel.InitializeChip()
-	N := 100
+	N := 5
+	fs := 7.6e6 // In Hz
+	fc := 1.8e3 // In MHz
 
-	param := smallscale.NewIIDChannel()
-	fd := smallscale.GetDoppler(speed, fc)
-	param := smallscale.NewSlowFadingChannel(fs, fd)
+	fd := smallscalechan.GetDoppler(fc, 5)
+	fmt.Println(fd)
+	// param := smallscalechan.NewSlowFadingChannel(fs, fd)
+	param := smallscalechan.NewIIDChannel()
 
-	param.Ts = 4
-	pdp := vlib.VectorF{1, .1}
+	param.Ts = -1
+	// pdp := vlib.VectorF{1, .1}
+	// param.SetPDP(pdp)
+	// param.Mode = ""
+
+	pdpm := pdp.PDPManager{}
+	pdpm.Load("pdpChannels.json")
+	pdp, _ := pdpm.GetPDPLinear(1/fs, "PB")
 	param.SetPDP(pdp)
-	param.Mode = ""
+	fmt.Println("The PDP is", pdp, "with Other params as ", param.Ts, param.Mode, param.FdopplerHz)
 	channel.InitParam(param)
 	// samples := vlib.VectorC(sources.RandNCVec(N, 1))
 	samples := vlib.NewOnesC(N)
 
 	var data gocomm.SComplex128Obj
-	data.Ts = 2
+	data.Ts = 1 / fs
 	for i := 0; i < N; i++ {
 		data.Ch = samples[i]
 
